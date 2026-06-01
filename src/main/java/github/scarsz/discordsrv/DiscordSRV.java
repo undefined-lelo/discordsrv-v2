@@ -2140,6 +2140,14 @@ public class DiscordSRV extends JavaPlugin {
             avatarUrl = !offline ? defaultUrl : offlineUrl;
         }
 
+        if (!EmbedBuilder.URL_PATTERN.matcher(avatarUrl).matches()) {
+            avatarUrl = !offline ? defaultUrl : offlineUrl;
+            DiscordSRV.config().setRuntimeValue("AvatarUrl", avatarUrl);
+
+            DiscordSRV.warning("Your AvatarUrl config option is not a valid http(s) URL.");
+            DiscordSRV.warning("You should set your AvatarUrl (in config.yml) to a valid http(s) URL or an empty string (\"\") to get rid of this warning.");
+        }
+
         if (avatarUrl.contains("://crafatar.com/")) {
             avatarUrl = !offline ? defaultUrl : offlineUrl;
             DiscordSRV.config().setRuntimeValue("AvatarUrl", avatarUrl);
