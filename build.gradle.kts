@@ -16,12 +16,9 @@ plugins {
 group = "com.discordsrv"
 val minecraftVersion = project.properties["minecraftVersion"]!!.toString()
 val paperApiVersion = project.properties["paperVersion"]!!.toString()
-val targetJavaVersion = 1.8
-
 java {
-    val javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 
     disableAutoTargetJvm() // required because paper-api uses Java 21 (w/ gradle metadata)
 }
@@ -44,6 +41,7 @@ tasks {
     }
     withType<JavaCompile> {
         options.encoding = "UTF-8"
+        options.release.set(21)
     }
     javadoc {
         options.encoding = "UTF-8"
@@ -107,6 +105,7 @@ tasks {
         minimize {
             exclude(dependency("github.scarsz:configuralize:.*"))
             exclude(dependency("me.scarsz.jdaappender:jda4:.*"))
+            exclude(dependency("me.scarsz.jdaappender:jda5:.*"))
             exclude(dependency("com.fasterxml.jackson.core:jackson-databind:.*"))
         }
 
@@ -196,7 +195,7 @@ dependencies {
     }
 
     // JDA
-    api("net.dv8tion:JDA:4.4.1_DiscordSRV.fix-7") {
+    api("net.dv8tion:JDA:6.4.2") {
         exclude(module = "opus-java") // we don't use voice features
     }
 
@@ -208,7 +207,7 @@ dependencies {
     }
 
     // Logging
-    implementation("me.scarsz.jdaappender:jda4:1.2.3")
+    implementation("me.scarsz.jdaappender:jda5:1.2.3")
     implementation("org.slf4j:slf4j-jdk14:1.7.36")
     implementation("org.slf4j:jcl-over-slf4j:1.7.36")
     // MC <  1.12 = 2.0-beta9
