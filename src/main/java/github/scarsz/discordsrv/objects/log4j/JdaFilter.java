@@ -33,6 +33,14 @@ import org.apache.logging.log4j.message.Message;
 public class JdaFilter implements Filter {
 
     public Result check(String loggerName, Level level, String message, Throwable throwable) {
+        try {
+            return checkInternal(loggerName, level, message, throwable);
+        } catch (Exception e) {
+            return Result.DENY;
+        }
+    }
+
+    private Result checkInternal(String loggerName, Level level, String message, Throwable throwable) {
         // only listen for JDA logs
         if (!loggerName.startsWith("github.scarsz.discordsrv.dependencies.jda")) return Result.NEUTRAL;
 

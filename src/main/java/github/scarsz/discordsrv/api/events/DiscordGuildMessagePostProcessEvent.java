@@ -23,7 +23,8 @@ package github.scarsz.discordsrv.api.events;
 import github.scarsz.discordsrv.api.Cancellable;
 import github.scarsz.discordsrv.util.MessageUtil;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.kyori.adventure.text.Component;
 
 /**
@@ -35,7 +36,7 @@ import net.kyori.adventure.text.Component;
  * {@link #setCancelled(boolean)} to cancel it from being broadcasted altogether</p>
  */
 @SuppressWarnings({"LombokGetterMayBeUsed", "LombokSetterMayBeUsed"})
-public class DiscordGuildMessagePostProcessEvent extends DiscordEvent<GuildMessageReceivedEvent> implements Cancellable {
+public class DiscordGuildMessagePostProcessEvent extends DiscordEvent<MessageReceivedEvent> implements Cancellable {
 
     private boolean cancelled;
 
@@ -48,10 +49,10 @@ public class DiscordGuildMessagePostProcessEvent extends DiscordEvent<GuildMessa
     private Component minecraftMessage;
 
     @Deprecated
-    public DiscordGuildMessagePostProcessEvent(GuildMessageReceivedEvent jdaEvent, boolean cancelled, String processedMessage) {
+    public DiscordGuildMessagePostProcessEvent(MessageReceivedEvent jdaEvent, boolean cancelled, String processedMessage) {
         super(jdaEvent.getJDA(), jdaEvent);
         this.author = jdaEvent.getAuthor();
-        this.channel = jdaEvent.getChannel();
+        this.channel = jdaEvent.getChannel().asTextChannel();
         this.guild = jdaEvent.getGuild();
         this.member = jdaEvent.getMember();
         this.message = jdaEvent.getMessage();
@@ -60,10 +61,10 @@ public class DiscordGuildMessagePostProcessEvent extends DiscordEvent<GuildMessa
         this.setProcessedMessage(processedMessage);
     }
 
-    public DiscordGuildMessagePostProcessEvent(GuildMessageReceivedEvent jdaEvent, boolean cancelled, Component minecraftMessage) {
+    public DiscordGuildMessagePostProcessEvent(MessageReceivedEvent jdaEvent, boolean cancelled, Component minecraftMessage) {
         super(jdaEvent.getJDA(), jdaEvent);
         this.author = jdaEvent.getAuthor();
-        this.channel = jdaEvent.getChannel();
+        this.channel = jdaEvent.getChannel().asTextChannel();
         this.guild = jdaEvent.getGuild();
         this.member = jdaEvent.getMember();
         this.message = jdaEvent.getMessage();

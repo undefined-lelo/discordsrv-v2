@@ -199,6 +199,20 @@ DiscordChatChannelListCommandAllPlayersSeparator: ", "
 #
 MinecraftPlayerJoinMessage:
   Enabled: true
+  # Components V2 uses a modern Discord container layout (TextDisplay, Section, Separator, Thumbnail)
+  # instead of classic embeds. When Enabled is true, the Content + Embed values above are
+  # auto-converted to equivalent V2 components. For full control, define Sections below:
+  # ComponentsV2:
+  #   Enabled: true
+  #   AccentColor: "#00ff00"
+  #   Sections:
+  #     - TextDisplays:
+  #         - "### %displayname% joined the server"
+  #       ThumbnailUrl: "%embedavatarurl%"
+  #     - TextDisplays:
+  #         - "-# %date%"
+  ComponentsV2:
+    Enabled: true
   Webhook:
     Enable: false
     AvatarUrl: "%botavatarurl%"
@@ -228,6 +242,8 @@ MinecraftPlayerJoinMessage:
 #
 MinecraftPlayerFirstJoinMessage:
   Enabled: true
+  ComponentsV2:
+    Enabled: true
   Webhook:
     Enable: false
     AvatarUrl: "%botavatarurl%"
@@ -257,6 +273,8 @@ MinecraftPlayerFirstJoinMessage:
 #
 MinecraftPlayerLeaveMessage:
   Enabled: true
+  ComponentsV2:
+    Enabled: true
   Webhook:
     Enable: false
     AvatarUrl: "%botavatarurl%"
@@ -287,6 +305,17 @@ MinecraftPlayerLeaveMessage:
 #
 MinecraftPlayerDeathMessage:
   Enabled: true
+  # Components V2 example with full Sections customization:
+  # ComponentsV2:
+  #   AccentColor: "#000000"
+  #   Sections:
+  #     - TextDisplays:
+  #         - "%deathmessage%"
+  #       ThumbnailUrl: "%embedavatarurl%"
+  #     - TextDisplays:
+  #         - "-# World: %world%"
+  ComponentsV2:
+    Enabled: true
   Webhook:
     Enable: false
     AvatarUrl: "%botavatarurl%"
@@ -317,6 +346,8 @@ MinecraftPlayerDeathMessage:
 #
 MinecraftPlayerAchievementMessage:
   Enabled: true
+  ComponentsV2:
+    Enabled: true
   Webhook:
     Enable: false
     AvatarUrl: "%botavatarurl%"

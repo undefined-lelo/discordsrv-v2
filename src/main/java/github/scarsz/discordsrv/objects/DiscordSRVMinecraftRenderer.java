@@ -26,7 +26,7 @@ import github.scarsz.discordsrv.util.DiscordUtil;
 import lombok.NonNull;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.Nullable;
 

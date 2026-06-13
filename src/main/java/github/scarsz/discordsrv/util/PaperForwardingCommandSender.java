@@ -22,7 +22,7 @@ package github.scarsz.discordsrv.util;
 
 import github.scarsz.discordsrv.DiscordSRV;
 import lombok.Getter;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.bukkit.command.CommandSender;
 
 import java.lang.reflect.Method;
@@ -44,7 +44,7 @@ public class PaperForwardingCommandSender {
     private final CommandSender feedbackSender;
     private final DiscordChatChannelCommandFeedbackForwarder sendUtil;
 
-    public PaperForwardingCommandSender(GuildMessageReceivedEvent event) {
+    public PaperForwardingCommandSender(MessageReceivedEvent event) {
         feedbackSender = createCommandSender();
         this.sendUtil = new DiscordChatChannelCommandFeedbackForwarder(event);
     }

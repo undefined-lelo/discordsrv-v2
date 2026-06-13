@@ -63,6 +63,13 @@ Experiment_MCDiscordReserializer_ToDiscord: false
 Experiment_MCDiscordReserializer_ToMinecraft: false
 Experiment_MCDiscordReserializer_InBroadcast: false
 
+# Components V2
+# When enabled (default), all messages will use Discord's Components V2 container layout (TextDisplay,
+# Section, Separator, Thumbnail) instead of classic embeds. Per-message behavior can be overridden
+# via the ComponentsV2 section in messages.yml.
+ComponentsV2:
+  Enabled: true
+
 # Other
 CancelConsoleCommandIfLoggingFailed: true
 ForcedLanguage: none

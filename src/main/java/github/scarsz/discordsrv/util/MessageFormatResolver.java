@@ -21,6 +21,7 @@
 package github.scarsz.discordsrv.util;
 
 import github.scarsz.configuralize.DynamicConfig;
+import github.scarsz.configuralize.DynamicConfig;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.objects.MessageFormat;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -31,6 +32,7 @@ import org.bukkit.ChatColor;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class MessageFormatResolver {
@@ -146,6 +148,37 @@ public class MessageFormatResolver {
         Optional<String> content = config.getOptionalString(key + ".Content");
         if (content.isPresent() && StringUtils.isNotBlank(content.get())) {
             messageFormat.setContent(content.get());
+        }
+
+        messageFormat.setComponentsV2Enabled(config.getOptionalBoolean(key + ".ComponentsV2.Enabled").orElse(true));
+
+        Optional<String> accentColor = config.getOptionalString(key + ".ComponentsV2.AccentColor");
+        if (accentColor.isPresent()) {
+            String hex = accentColor.get().trim();
+            if (!hex.startsWith("#")) hex = "#" + hex;
+            if (hex.length() == 7) {
+                messageFormat.setComponentsV2AccentColor(Integer.valueOf(hex.substring(1, 7), 16));
+            }
+        }
+
+        config.getOptionalString(key + ".ComponentsV2.ThumbnailUrl")
+                .filter(StringUtils::isNotBlank).ifPresent(messageFormat::setComponentsV2ThumbnailUrl);
+
+        Optional<List<Map<?, ?>>> sectionsRaw = config.getOptional(key + ".ComponentsV2.Sections");
+        if (sectionsRaw.isPresent()) {
+            List<MessageFormat.SectionConfig> sections = new ArrayList<>();
+            for (Map<?, ?> sec : sectionsRaw.get()) {
+                List<String> texts = new ArrayList<>();
+                Object textDisplays = sec.get("TextDisplays");
+                if (textDisplays instanceof List) {
+                    for (Object t : (List<?>) textDisplays) {
+                        if (t != null) texts.add(t.toString());
+                    }
+                }
+                Object thumb = sec.get("ThumbnailUrl");
+                sections.add(new MessageFormat.SectionConfig(texts, thumb != null ? thumb.toString() : null));
+            }
+            messageFormat.setComponentsV2Sections(sections);
         }
 
         return messageFormat.isAnyContent() ? messageFormat : null;

@@ -82,6 +82,11 @@ do
     esac
 done
 
+# Default JAVA_HOME if not set - prefer full JDK over JRE-only installations
+if [ -z "$JAVA_HOME" ] && [ -x /usr/lib/jvm/java-latest-openjdk/bin/javac ]; then
+    JAVA_HOME=/usr/lib/jvm/java-latest-openjdk
+fi
+
 # This is normally unused
 # shellcheck disable=SC2034
 APP_BASE_NAME=${0##*/}

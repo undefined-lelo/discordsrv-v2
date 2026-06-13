@@ -27,7 +27,9 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -56,6 +58,22 @@ public class MessageFormat {
     private boolean useWebhooks;
     private String webhookAvatarUrl;
     private String webhookName;
+
+    // Components V2
+    private boolean componentsV2Enabled = true;
+
+    // Per-message V2 section layout overrides (null = auto-convert from Content+Embed)
+    private List<SectionConfig> componentsV2Sections;
+    private Integer componentsV2AccentColor;
+    private String componentsV2ThumbnailUrl;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SectionConfig {
+        private List<String> textDisplays = new ArrayList<>();
+        private String thumbnailUrl;
+    }
 
     public boolean isAnyContent() {
         return content != null || authorName != null || authorUrl != null || authorImageUrl != null

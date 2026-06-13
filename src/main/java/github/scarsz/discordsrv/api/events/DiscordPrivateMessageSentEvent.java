@@ -22,7 +22,7 @@ package github.scarsz.discordsrv.api.events;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.PrivateChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.User;
 
 /**
@@ -37,7 +37,7 @@ public class DiscordPrivateMessageSentEvent extends DiscordEvent {
 
     public DiscordPrivateMessageSentEvent(JDA jda, Message message) {
         super(jda);
-        this.channel = message.getPrivateChannel();
+        this.channel = (PrivateChannel) message.getChannel();
         this.message = message;
         this.recipient = channel.getUser();
     }

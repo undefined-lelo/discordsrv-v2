@@ -20,7 +20,7 @@
 
 package github.scarsz.discordsrv.api.events;
 
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 /**
  * <p>Called directly after a command was sent to the minecraft server from discord</p>
@@ -28,11 +28,11 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
  * <p>{@link #getCommand()} returns the final command that was sent to the server
  * <p>{@link #isSentInConsoleChannel()} returns true if the message was sent in your console command discord channel, and false otherwise</p>
  */
-public class DiscordConsoleCommandPostProcessEvent extends DiscordEvent<GuildMessageReceivedEvent>{
+public class DiscordConsoleCommandPostProcessEvent extends DiscordEvent<MessageReceivedEvent>{
     private boolean sentInConsoleChannel;
     private String command;
 
-    public DiscordConsoleCommandPostProcessEvent(GuildMessageReceivedEvent jdaEvent, String command, boolean sentInConsoleChannel) {
+    public DiscordConsoleCommandPostProcessEvent(MessageReceivedEvent jdaEvent, String command, boolean sentInConsoleChannel) {
         super(jdaEvent.getJDA(), jdaEvent);
         this.command = command;
         this.sentInConsoleChannel = sentInConsoleChannel;

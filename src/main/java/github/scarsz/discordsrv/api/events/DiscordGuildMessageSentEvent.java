@@ -23,7 +23,7 @@ package github.scarsz.discordsrv.api.events;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 /**
  * <p>Called directly after a message is sent to a {@link TextChannel} by the bot</p>
@@ -38,7 +38,7 @@ public class DiscordGuildMessageSentEvent extends DiscordEvent {
 
     public DiscordGuildMessageSentEvent(JDA jda, Message message) {
         super(jda);
-        this.channel = message.getTextChannel();
+        this.channel = message.getChannel().asTextChannel();
         this.guild = message.getGuild();
         this.message = message;
     }

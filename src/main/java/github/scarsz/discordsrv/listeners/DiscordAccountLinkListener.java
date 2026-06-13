@@ -27,15 +27,14 @@ import github.scarsz.discordsrv.util.DiscordUtil;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.exceptions.ErrorHandler;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
@@ -44,32 +43,34 @@ import java.util.concurrent.TimeUnit;
 
 public class DiscordAccountLinkListener extends ListenerAdapter {
 
-    @Override
-    public void onPrivateMessageReceived(PrivateMessageReceivedEvent event) {
-        // don't process messages sent by the bot
-        if (event.getAuthor().getId().equals(event.getJDA().getSelfUser().getId())) return;
-
-        DiscordSRV.api.callEvent(new DiscordPrivateMessageReceivedEvent(event));
-
-        // don't link accounts if config option is disabled
-        if (!DiscordSRV.config().getBoolean("MinecraftDiscordAccountLinkedUsePM")) return;
-
-        String reply = DiscordSRV.getPlugin().getAccountLinkManager().process(event.getMessage().getContentRaw(), event.getAuthor().getId());
-        if (reply != null) event.getMessage().reply(reply).queue();
-    }
-
     private final ErrorHandler ignoreFailedToDeleteMessage = new ErrorHandler()
             .ignore(ErrorResponse.UNKNOWN_MESSAGE)
             .ignore(ErrorResponse.MISSING_ACCESS);
 
     @Override
-    public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
+    public void onMessageReceived(MessageReceivedEvent event) {
+        if (!event.isFromGuild()) {
+            // private message
+            // don't process messages sent by the bot
+            if (event.getAuthor().getId().equals(event.getJDA().getSelfUser().getId())) return;
+
+            DiscordSRV.api.callEvent(new DiscordPrivateMessageReceivedEvent(event));
+
+            // don't link accounts if config option is disabled
+            if (!DiscordSRV.config().getBoolean("MinecraftDiscordAccountLinkedUsePM")) return;
+
+            String reply = DiscordSRV.getPlugin().getAccountLinkManager().process(event.getMessage().getContentRaw(), event.getAuthor().getId());
+            if (reply != null) event.getMessage().reply(reply).queue();
+            return;
+        }
+
+        // guild message
         // don't process messages sent by bots
         if (event.getAuthor().isBot()) return;
 
         // if message is not in the link channel, don't process it
         TextChannel linkChannel = DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName("link");
-        if (!event.getChannel().equals(linkChannel)) return;
+        if (!event.getChannel().asTextChannel().equals(linkChannel)) return;
 
         Message receivedMessage = event.getMessage();
         String reply = DiscordSRV.getPlugin().getAccountLinkManager().process(receivedMessage.getContentRaw(), event.getAuthor().getId());

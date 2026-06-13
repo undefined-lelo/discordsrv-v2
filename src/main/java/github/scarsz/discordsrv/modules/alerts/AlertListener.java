@@ -29,8 +29,8 @@ import github.scarsz.discordsrv.objects.ExpiringDualHashBidiMap;
 import github.scarsz.discordsrv.objects.Lag;
 import github.scarsz.discordsrv.objects.MessageFormat;
 import github.scarsz.discordsrv.util.*;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import org.apache.commons.lang3.StringUtils;
@@ -597,7 +597,7 @@ public class AlertListener implements Listener, EventListener {
                     return content;
                 };
 
-                Message message = DiscordSRV.translateMessage(messageFormat, translator);
+                MessageCreateData message = DiscordSRV.translateMessage(messageFormat, translator);
                 if (message == null) {
                     DiscordSRV.debug(Debug.ALERTS, "Not sending alert because it is configured to have no message content");
                     return;
@@ -607,7 +607,7 @@ public class AlertListener implements Listener, EventListener {
                     WebhookUtil.deliverMessage(textChannel,
                             translator.apply(messageFormat.getWebhookName(), false),
                             translator.apply(messageFormat.getWebhookAvatarUrl(), false),
-                            message.getContentRaw(), message.getEmbeds().stream().findFirst().orElse(null));
+                            message.getContent(), message.getEmbeds().stream().findFirst().orElse(null));
                 } else {
                     DiscordUtil.queueMessage(textChannel, message);
                 }

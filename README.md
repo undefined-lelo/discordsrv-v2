@@ -1,3 +1,6 @@
+disclaimer to those who will probably yell at me for this
+> yes, ai was used for this. i dont know an ounce of java and this is specifically for my personal use. the only reason it's public is in case someone else wanted the same thing i wanted for discordsrv. i will block you if you "flame" me regarding this project being ai.
+
 ![](https://lol.scarsz.me/AiKvTS/Logo-filled-stroke.png "DiscordSRV Logo")
 
 [![](https://discord.com/api/guilds/135634590575493120/widget.png)](https://discordsrv.com/discord "Discord")

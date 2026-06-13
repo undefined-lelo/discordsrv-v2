@@ -32,6 +32,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 
+import net.dv8tion.jda.api.entities.UserSnowflake;
 import java.util.concurrent.CompletableFuture;
 
 public class PlayerBanListener implements Listener {
@@ -68,10 +69,10 @@ public class PlayerBanListener implements Listener {
             String discordId = DiscordSRV.getPlugin().getAccountLinkManager().getDiscordIdBypassCache(event.getPlayer().getUniqueId());
             if (discordId == null) return;
 
-            DiscordSRV.getPlugin().getMainGuild().retrieveBanById(discordId)
+            DiscordSRV.getPlugin().getMainGuild().retrieveBan(UserSnowflake.fromId(discordId))
                     .queue(ban -> {
                         DiscordSRV.info("Unbanning player " + event.getPlayer().getName() + " from Discord (ID " + discordId + ") because they aren't banned on the server");
-                        DiscordSRV.getPlugin().getMainGuild().unban(discordId).queue();
+                        DiscordSRV.getPlugin().getMainGuild().unban(UserSnowflake.fromId(discordId)).queue();
                     }, failure -> DiscordSRV.debug(Debug.MINECRAFT_TO_DISCORD, "Failed to check if player " + event.getPlayer().getName() + " is banned in Discord: " + failure.getMessage()));
         });
     }

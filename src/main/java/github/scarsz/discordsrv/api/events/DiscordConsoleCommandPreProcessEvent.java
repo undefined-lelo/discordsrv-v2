@@ -21,7 +21,7 @@
 package github.scarsz.discordsrv.api.events;
 
 import github.scarsz.discordsrv.api.Cancellable;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 /**
  * <p>Called directly before a command is sent to the minecraft server from discord</p>
@@ -30,13 +30,13 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
  * <p>Cancelling the event will stop the command from being sent to the server</p>
  */
 @SuppressWarnings({"LombokGetterMayBeUsed", "LombokSetterMayBeUsed"})
-public class DiscordConsoleCommandPreProcessEvent extends DiscordEvent<GuildMessageReceivedEvent> implements Cancellable {
+public class DiscordConsoleCommandPreProcessEvent extends DiscordEvent<MessageReceivedEvent> implements Cancellable {
 
     private boolean sentInConsoleChannel;
     private boolean cancelled;
     private String command;
 
-    public DiscordConsoleCommandPreProcessEvent(GuildMessageReceivedEvent jdaEvent, String command, boolean sentInConsoleChannel) {
+    public DiscordConsoleCommandPreProcessEvent(MessageReceivedEvent jdaEvent, String command, boolean sentInConsoleChannel) {
         super(jdaEvent.getJDA(), jdaEvent);
         this.sentInConsoleChannel = sentInConsoleChannel;
         this.cancelled = false;

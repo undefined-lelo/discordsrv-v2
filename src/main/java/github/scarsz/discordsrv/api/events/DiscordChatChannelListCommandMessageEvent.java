@@ -21,8 +21,8 @@
 package github.scarsz.discordsrv.api.events;
 
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 /**
  * <p>Called before a playerlist command message response is sent to {@link TextChannel} by the bot</p>
@@ -42,12 +42,12 @@ public class DiscordChatChannelListCommandMessageEvent extends Event {
     private final TextChannel channel;
     private final Guild guild;
     private final String message;
-    private final GuildMessageReceivedEvent triggeringJDAEvent;
+    private final MessageReceivedEvent triggeringJDAEvent;
 
     private String playerListMessage;
     private int expiration;
 
-    public DiscordChatChannelListCommandMessageEvent(TextChannel channel, Guild guild, String message, GuildMessageReceivedEvent triggeringJDAEvent, String playerListMessage, int expiration, Result result) {
+    public DiscordChatChannelListCommandMessageEvent(TextChannel channel, Guild guild, String message, MessageReceivedEvent triggeringJDAEvent, String playerListMessage, int expiration, Result result) {
         this.channel = channel;
         this.guild = guild;
         this.message = message;
@@ -73,7 +73,7 @@ public class DiscordChatChannelListCommandMessageEvent extends Event {
         return this.message;
     }
 
-    public GuildMessageReceivedEvent getTriggeringJDAEvent() {
+    public MessageReceivedEvent getTriggeringJDAEvent() {
         return this.triggeringJDAEvent;
     }
 

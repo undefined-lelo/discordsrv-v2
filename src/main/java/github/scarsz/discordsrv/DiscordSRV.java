@@ -61,7 +61,10 @@ import me.scarsz.jdaappender.LogItem;
 import me.scarsz.jdaappender.LogLevel;
 import net.dv8tion.jda.api.*;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.events.ShutdownEvent;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.events.session.ShutdownEvent;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.HierarchyException;
 import net.dv8tion.jda.api.exceptions.PermissionException;
@@ -70,13 +73,15 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.CloseCode;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import net.dv8tion.jda.api.components.container.Container;
+import net.dv8tion.jda.api.components.textdisplay.TextDisplay;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextReplacementConfig;
 import okhttp3.*;
-import okhttp3.internal.Util;
 import okhttp3.internal.tls.OkHostnameVerifier;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -115,7 +120,6 @@ import org.minidns.dnsmessage.DnsMessage;
 import org.minidns.record.Record;
 
 import javax.net.ssl.SSLContext;
-import javax.security.auth.login.LoginException;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -202,6 +206,7 @@ public class DiscordSRV extends JavaPlugin {
 
     // JDA & JDA related
     @Getter private JDA jda = null;
+    @Getter private OkHttpClient httpClient = null;
     private ExecutorService callbackThreadPool;
     @Getter private ChannelLoggingHandler consoleAppender;
     private JdaFilter jdaFilter;
@@ -221,8 +226,7 @@ public class DiscordSRV extends JavaPlugin {
     }
 
     public void reloadAllowedMentions() {
-        // set default mention types to never ping everyone/here
-        MessageAction.setDefaultMentions(config().getStringList("DiscordChatChannelAllowedMentions").stream()
+        Set<Message.MentionType> allowedMentions = config().getStringList("DiscordChatChannelAllowedMentions").stream()
                 .map(s -> {
                     try {
                         return Message.MentionType.valueOf(s.toUpperCase());
@@ -230,8 +234,8 @@ public class DiscordSRV extends JavaPlugin {
                         DiscordSRV.error("Unknown mention type \"" + s + "\" defined in DiscordChatChannelAllowedMentions");
                         return null;
                     }
-                }).filter(Objects::nonNull).collect(Collectors.toSet()));
-        DiscordSRV.debug("Allowed chat mention types: " + MessageAction.getDefaultMentions().stream().map(Enum::name).collect(Collectors.joining(", ")));
+                }).filter(Objects::nonNull).collect(Collectors.toSet());
+        DiscordSRV.debug("Allowed chat mention types: " + allowedMentions.stream().map(Enum::name).collect(Collectors.joining(", ")));
     }
 
     public void reloadChannels() {
@@ -611,9 +615,7 @@ public class DiscordSRV extends JavaPlugin {
             config.updateLoggers();
         }
 
-        if (Debug.JDA_REST_ACTIONS.isVisible()) {
-            RestAction.setPassContext(true);
-        }
+        // RestAction context is always available in JDA 5, no need to enable it
 
         // http client for JDA
         Dns dns = Dns.SYSTEM;
@@ -720,7 +722,7 @@ public class DiscordSRV extends JavaPlugin {
         Dispatcher dispatcher = new Dispatcher(
                 new ThreadPoolExecutor(
                         2, 20, 5, TimeUnit.SECONDS,
-                        new SynchronousQueue<>(), Util.threadFactory("OkHttp Dispatcher", false))
+                        new SynchronousQueue<>(), new ThreadFactoryBuilder().setNameFormat("OkHttp Dispatcher").build())
         );
         dispatcher.setMaxRequests(20);
         dispatcher.setMaxRequestsPerHost(20); // most requests are to discord.com
@@ -774,7 +776,7 @@ public class DiscordSRV extends JavaPlugin {
             }
         }
 
-        OkHttpClient httpClient = httpClientBuilder.build();
+        httpClient = httpClientBuilder.build();
 
         // set custom RestAction failure handler
         Consumer<? super Throwable> defaultFailure = RestAction.getDefaultFailure();
@@ -886,12 +888,11 @@ public class DiscordSRV extends JavaPlugin {
                     .disableCache(Arrays.stream(CacheFlag.values()).filter(cacheFlag -> !api.getCacheFlags().contains(cacheFlag)).collect(Collectors.toList()))
                     .setMemberCachePolicy(MemberCachePolicy.ALL)
                     .setCallbackPool(callbackThreadPool, false)
-                    .setGatewayPool(gatewayThreadPool, true)
-                    .setRateLimitPool(rateLimitThreadPool, true)
+                    .setGatewayPool(gatewayThreadPool)
+                    .setRateLimitScheduler(rateLimitThreadPool)
                     .setWebsocketFactory(websocketFactory)
                     .setHttpClient(httpClient)
                     .setAutoReconnect(true)
-                    .setBulkDeleteSplittingEnabled(false)
                     .setEnableShutdownHook(false)
                     .setToken(token)
                     .addEventListeners(new DiscordBanListener())
@@ -903,27 +904,31 @@ public class DiscordSRV extends JavaPlugin {
                     .addEventListeners(groupSynchronizationManager)
                     .setContextEnabled(false)
                     .build();
-            jda.awaitReady(); // let JDA be assigned as soon as we can, but wait until it's ready
+            jda.awaitStatus(JDA.Status.CONNECTED); // let JDA be assigned as soon as we can, but wait until it's ready
 
             for (Guild guild : jda.getGuilds()) {
-                guild.retrieveOwner(true).queue();
-                guild.loadMembers()
-                        .onSuccess(members -> DiscordSRV.debug("Loaded " + members.size() + " members in guild " + guild))
+                guild.retrieveOwner().queue();
+                List<Member> guildMembers = new ArrayList<>();
+                guild.loadMembers(guildMembers::add)
+                        .onSuccess(v -> DiscordSRV.debug("Loaded " + guildMembers.size() + " members in guild " + guild))
                         .onError(throwable -> DiscordSRV.error("Failed to retrieve members of guild " + guild, throwable))
                         .get(); // block DiscordSRV startup until members are loaded
             }
-        } catch (LoginException e) {
-            disablePlugin();
-            if (e.getMessage().toLowerCase().contains("the provided token is invalid")) {
-                invalidBotToken = true;
-                DiscordDisconnectListener.printDisconnectMessage(true, "The bot token is invalid");
-            } else {
-                DiscordDisconnectListener.printDisconnectMessage(true, e.getMessage());
-            }
-            return;
         } catch (Exception e) {
             if (e instanceof IllegalStateException && e.getMessage().equals("Was shutdown trying to await status")) {
                 // already logged by JDA
+                return;
+            }
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("the provided token is invalid")) {
+                disablePlugin();
+                invalidBotToken = true;
+                DiscordDisconnectListener.printDisconnectMessage(true, "The bot token is invalid");
+                return;
+            }
+            if (e instanceof net.dv8tion.jda.api.exceptions.InvalidTokenException) {
+                disablePlugin();
+                invalidBotToken = true;
+                DiscordDisconnectListener.printDisconnectMessage(true, "The bot token is invalid");
                 return;
             }
             DiscordSRV.error("An unknown error occurred building JDA...", e);
@@ -969,7 +974,7 @@ public class DiscordSRV extends JavaPlugin {
 
                 consoleAppender = new ChannelLoggingHandler(() -> {
                     TextChannel textChannel = DiscordSRV.getPlugin().getConsoleChannel();
-                    return textChannel != null && textChannel.getGuild().getSelfMember().hasPermission(textChannel, Permission.MESSAGE_READ, Permission.MESSAGE_WRITE) ? textChannel : null;
+                    return textChannel != null && textChannel.getGuild().getSelfMember().hasPermission(textChannel, Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND) ? textChannel : null;
                 }, config -> {
                     config.setUseCodeBlocks(config().getBooleanElse("DiscordConsoleChannelUseCodeBlocks", true));
                     config.setLoggerNamePadding(config().getIntElse("DiscordConsoleChannelPadding", 0));
@@ -1853,7 +1858,14 @@ public class DiscordSRV extends JavaPlugin {
         if (channel == null) channel = getOptionalChannel("global");
         TextChannel destinationChannel = getDestinationTextChannelForGameChannelName(channel);
 
-        if (!webhookMessageDelivery) {
+        if (isComponentsV2GlobalEnabled()) {
+            Container container = Container.of(TextDisplay.of(processedMessage));
+            MessageCreateData v2Message = new MessageCreateBuilder()
+                    .setComponents(container)
+                    .useComponentsV2()
+                    .build();
+            destinationChannel.sendMessage(v2Message).queue();
+        } else if (!webhookMessageDelivery) {
             DiscordUtil.sendMessage(destinationChannel, processedMessage);
         } else {
 
@@ -1973,7 +1985,7 @@ public class DiscordSRV extends JavaPlugin {
             return content;
         };
 
-        Message discordMessage = translateMessage(messageFormat, translator);
+        MessageCreateData discordMessage = translateMessage(messageFormat, translator);
         if (discordMessage == null) return;
 
         String webhookName = translator.apply(messageFormat.getWebhookName(), false);
@@ -1981,7 +1993,8 @@ public class DiscordSRV extends JavaPlugin {
 
         if (messageFormat.isUseWebhooks()) {
             WebhookUtil.deliverMessage(textChannel, webhookName, webhookAvatarUrl,
-                    discordMessage.getContentRaw(), discordMessage.getEmbeds().stream().findFirst().orElse(null));
+                    discordMessage.getContent(), discordMessage.getEmbeds().stream().findFirst().orElse(null),
+                    discordMessage.getComponents());
         } else {
             DiscordUtil.queueMessage(textChannel, discordMessage, true);
         }
@@ -2034,7 +2047,7 @@ public class DiscordSRV extends JavaPlugin {
             return content;
         };
 
-        Message discordMessage = translateMessage(messageFormat, translator);
+        MessageCreateData discordMessage = translateMessage(messageFormat, translator);
         if (discordMessage == null) return;
 
         String webhookName = translator.apply(messageFormat.getWebhookName(), false);
@@ -2042,7 +2055,8 @@ public class DiscordSRV extends JavaPlugin {
 
         if (messageFormat.isUseWebhooks()) {
             WebhookUtil.deliverMessage(textChannel, webhookName, webhookAvatarUrl,
-                    discordMessage.getContentRaw(), discordMessage.getEmbeds().stream().findFirst().orElse(null));
+                    discordMessage.getContent(), discordMessage.getEmbeds().stream().findFirst().orElse(null),
+                    discordMessage.getComponents());
         } else {
             DiscordUtil.queueMessage(textChannel, discordMessage, true);
         }
@@ -2052,9 +2066,24 @@ public class DiscordSRV extends JavaPlugin {
         return MessageFormatResolver.getMessageFromConfiguration(config(), key);
     }
 
+    private static boolean isComponentsV2GlobalEnabled() {
+        return config().getOptionalBoolean("ComponentsV2.Enabled").orElse(true);
+    }
+
     @CheckReturnValue
-    public static Message translateMessage(MessageFormat messageFormat, BiFunction<String, Boolean, String> translator) {
-        MessageBuilder messageBuilder = new MessageBuilder();
+    public static MessageCreateData translateMessage(MessageFormat messageFormat, BiFunction<String, Boolean, String> translator) {
+        MessageCreateBuilder messageBuilder = new MessageCreateBuilder();
+
+        if (messageFormat.isComponentsV2Enabled()) {
+            net.dv8tion.jda.api.components.container.Container container = ComponentsV2Util.buildContainer(messageFormat, translator);
+            if (container != null) {
+                messageBuilder.setComponents(container);
+                messageBuilder.useComponentsV2();
+                return messageBuilder.build();
+            }
+            return null;
+        }
+
         Optional.ofNullable(messageFormat.getContent()).map(content -> translator.apply(content, true))
                 .filter(StringUtils::isNotBlank).ifPresent(messageBuilder::setContent);
 
@@ -2175,9 +2204,9 @@ public class DiscordSRV extends JavaPlugin {
         return avatarUrl;
     }
 
-    public static int getLength(Message message) {
+    public static int getLength(MessageCreateData message) {
         StringBuilder content = new StringBuilder();
-        content.append(message.getContentRaw());
+        content.append(message.getContent());
 
         message.getEmbeds().stream().findFirst().ifPresent(embed -> {
             if (embed.getTitle() != null) {

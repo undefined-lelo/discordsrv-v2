@@ -26,8 +26,8 @@ import github.scarsz.discordsrv.api.events.AchievementMessagePostProcessEvent;
 import github.scarsz.discordsrv.api.events.AchievementMessagePreProcessEvent;
 import github.scarsz.discordsrv.objects.MessageFormat;
 import github.scarsz.discordsrv.util.*;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -140,7 +140,7 @@ public class PlayerAchievementsListener {
             content = PlaceholderUtil.replacePlaceholdersToDiscord(content, player);
             return content;
         };
-        Message discordMessage = DiscordSRV.translateMessage(messageFormat, translator);
+        MessageCreateData discordMessage = DiscordSRV.translateMessage(messageFormat, translator);
         if (discordMessage == null) return;
 
         String webhookName = translator.apply(messageFormat.getWebhookName(), false);
@@ -159,7 +159,8 @@ public class PlayerAchievementsListener {
         TextChannel textChannel = DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(channelName);
         if (postEvent.isUsingWebhooks()) {
             WebhookUtil.deliverMessage(textChannel, postEvent.getWebhookName(), postEvent.getWebhookAvatarUrl(),
-                    discordMessage.getContentRaw(), discordMessage.getEmbeds().stream().findFirst().orElse(null));
+                    discordMessage.getContent(), discordMessage.getEmbeds().stream().findFirst().orElse(null),
+                    discordMessage.getComponents());
         } else {
             DiscordUtil.queueMessage(textChannel, discordMessage, true);
         }
